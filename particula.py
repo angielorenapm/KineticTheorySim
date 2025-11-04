@@ -27,32 +27,52 @@ class Particula:
         self.historial_posiciones = [self.posicion.copy()]
         self.historial_velocidades = [self.velocidad.copy()]
     
-    def avanzar(self, dt):
+    def mover(self, dt):
         """
-        Avanza la partícula en el tiempo usando integración de Verlet.
+        Actualiza la posición según la velocidad actual (movimiento lineal simple).
         
-        Ecuaciones:
-            v_{n+1/2} = v_n + (F_n / m) * (Δt/2)
-            x_{n+1} = x_n + v_{n+1/2} * Δt
-            v_{n+1} = v_{n+1/2} + (F_{n+1} / m) * (Δt/2)
-            
+        Ecuación: x_{n+1} = x_n + v_n · Δt
+        
         Unidades:
             dt: segundos (s)
             x: metros (m)
             v: metros/segundo (m/s)
-            F: newtons (N)
         """
-        # Medio paso de velocidad
-        v_medio = self.velocidad + (self.fuerza / self.masa) * (dt / 2)
-        
-        # Paso completo de posición
-        self.posicion += v_medio * dt
-        
-        # Actualizar fuerza (se calculará externamente)
-        # Para el siguiente medio paso de velocidad
-        
-        # Guardar historial
+        self.posicion += self.velocidad * dt
         self.historial_posiciones.append(self.posicion.copy())
+    
+    def avanzar(self, dt):
+        """Alias para mover() para mantener compatibilidad"""
+        self.mover(dt)
+    
+    def colisionar_pared(self, ancho, alto):
+        """
+        Invierte la velocidad al chocar contra las paredes (colisiones elásticas).
+        
+        Parámetros:
+            ancho (float): Ancho de la caja en metros
+            alto (float): Alto de la caja en metros
+        """
+        # Pared izquierda (x = 0)
+        if self.posicion[0] - self.radio <= 0:
+            self.velocidad[0] = abs(self.velocidad[0])
+            self.posicion[0] = self.radio
+        
+        # Pared derecha (x = ancho)
+        if self.posicion[0] + self.radio >= ancho:
+            self.velocidad[0] = -abs(self.velocidad[0])
+            self.posicion[0] = ancho - self.radio
+        
+        # Pared inferior (y = 0)
+        if self.posicion[1] - self.radio <= 0:
+            self.velocidad[1] = abs(self.velocidad[1])
+            self.posicion[1] = self.radio
+        
+        # Pared superior (y = alto)
+        if self.posicion[1] + self.radio >= alto:
+            self.velocidad[1] = -abs(self.velocidad[1])
+            self.posicion[1] = alto - self.radio
+        
         self.historial_velocidades.append(self.velocidad.copy())
     
     def energia_cinetica(self):
@@ -89,9 +109,7 @@ class Particula:
         return (self.masa * v_cuad) / (2 * k_B)
     
     def distancia_a(self, otra_particula):
-        """
-        Calcula la distancia entre centros de dos partículas.
-        """
+        """Calcula la distancia entre centros de dos partículas."""
         return np.linalg.norm(self.posicion - otra_particula.posicion)
     
     def colisiona_con(self, otra_particula):

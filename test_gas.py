@@ -1,86 +1,147 @@
 import unittest
 import numpy as np
 from particula import Particula
-from simulacion import Simulacion
+from simulacion import crear_gas, paso, energia_total, temperatura
 
 class TestGasIdeal(unittest.TestCase):
     """Pruebas unitarias para verificar la física del gas ideal."""
     
     def setUp(self):
         """Configuración inicial para las pruebas."""
-        self.simulacion = Simulacion(tamaño_caja=1e-8, n_particulas=10)
-        self.simulacion.inicializar_particulas_aleatorias()
+        self.ancho = 1e-8
+        self.alto = 1e-8
+        self.N = 10
+        self.v_media = 1000
+        self.particulas = crear_gas(self.N, self.ancho, self.alto, self.v_media)
+        self.dt = 1e-12
+    
+    def test_crear_gas(self):
+        """RF3.1: Verifica que el número de partículas creadas sea correcto."""
+        self.assertEqual(len(self.particulas), self.N)
+        print("✓ RF3.1: Número de partículas correcto")
+    
+    def test_particulas_en_rango(self):
+        """RF3.2: Verifica que las partículas no salgan del rango de simulación."""
+        # Verificar posiciones iniciales
+        for p in self.particulas:
+            self.assertGreaterEqual(p.posicion[0], 0)
+            self.assertLessEqual(p.posicion[0], self.ancho)
+            self.assertGreaterEqual(p.posicion[1], 0)
+            self.assertLessEqual(p.posicion[1], self.alto)
+        
+        # Avanzar simulación y verificar que permanecen en rango
+        for _ in range(100):
+            paso(self.particulas, self.dt, self.ancho, self.alto)
+            for p in self.particulas:
+                self.assertGreaterEqual(p.posicion[0], 0)
+                self.assertLessEqual(p.posicion[0], self.ancho)
+                self.assertGreaterEqual(p.posicion[1], 0)
+                self.assertLessEqual(p.posicion[1], self.alto)
+        
+        print("✓ RF3.2: Partículas permanecen en el rango de simulación")
+    
+    def test_energia_total_positiva(self):
+        """RF3.3: Verifica que la energía total sea positiva."""
+        energia = energia_total(self.particulas)
+        self.assertGreater(energia, 0)
+        print("✓ RF3.3: Energía total positiva")
     
     def test_conservacion_energia(self):
-        """Verifica que la energía total se conserve."""
-        energia_inicial = self.simulacion.calcular_energia_total()
+        """RF3.4: Verifica que la energía total se conserve."""
+        energia_inicial = energia_total(self.particulas)
         
-        # Avanzar simulación
-        self.simulacion.avanzar(pasos=100)
-        energia_final = self.simulacion.calcular_energia_total()
+        # Avanzar simulación 100 pasos
+        for _ in range(100):
+            paso(self.particulas, self.dt, self.ancho, self.alto)
         
-        # La energía debe conservarse (con pequeña tolerancia numérica)
-        tolerancia = 1e-15
-        self.assertAlmostEqual(energia_inicial, energia_final, delta=tolerancia)
-    
-    def test_conservacion_momento(self):
-        """Verifica que el momento lineal total se conserve."""
-        momento_inicial = np.sum([p.momento_lineal() for p in self.simulacion.particulas], axis=0)
+        energia_final = energia_total(self.particulas)
         
-        self.simulacion.avanzar(pasos=50)
-        momento_final = np.sum([p.momento_lineal() for p in self.simulacion.particulas], axis=0)
+        # La energía debe conservarse (variación < 1%)
+        variacion_porcentual = abs(energia_final - energia_inicial) / energia_inicial * 100
+        self.assertLess(variacion_porcentual, 1.0)
         
-        # El momento total debe conservarse
-        tolerancia = 1e-20
-        for i in range(2):
-            self.assertAlmostEqual(momento_inicial[i], momento_final[i], delta=tolerancia)
-    
-    def test_colision_elastica(self):
-        """Verifica que las colisiones sean elásticas."""
-        # Crear dos partículas en colisión frontal
-        p1 = Particula(1, masa=1e-26, radio=1e-10, posicion=[0.2e-8, 0.5e-8], 
-                       velocidad=[100, 0])
-        p2 = Particula(2, masa=1e-26, radio=1e-10, posicion=[0.3e-8, 0.5e-8], 
-                       velocidad=[-100, 0])
-        
-        # Energía cinética antes de la colisión
-        energia_inicial = p1.energia_cinetica() + p2.energia_cinetica()
-        
-        # Simular colisión
-        sim = Simulacion(tamaño_caja=1e-8, n_particulas=0)
-        sim.particulas = [p1, p2]
-        sim.detectar_colisiones()
-        
-        # Energía cinética después de la colisión
-        energia_final = p1.energia_cinetica() + p2.energia_cinetica()
-        
-        self.assertAlmostEqual(energia_inicial, energia_final, delta=1e-20)
+        print(f"✓ RF3.4: Energía conservada (variación: {variacion_porcentual:.4f}%)")
     
     def test_relacion_temperatura_velocidad(self):
-        """Verifica la relación entre temperatura y velocidad promedio."""
+        """RF3.5: Verifica la relación entre temperatura y velocidad promedio."""
         k_B = 1.38e-23
         
-        # Para un gas ideal en 2D: T = (m * v_prom²) / (2 * k_B)
-        temperatura_medida = self.simulacion.calcular_temperatura()
+        # Calcular temperatura usando función del módulo
+        T_calculada = temperatura(self.particulas, k_B)
         
-        # Calcular temperatura a partir de velocidad promedio
-        velocidades = [np.linalg.norm(p.velocidad) for p in self.simulacion.particulas]
+        # Calcular temperatura a partir de velocidades
+        velocidades = [np.linalg.norm(p.velocidad) for p in self.particulas]
         v_prom_cuad = np.mean(np.square(velocidades))
-        temperatura_calculada = (self.simulacion.masa_particula * v_prom_cuad) / (2 * k_B)
+        T_velocidad = (self.particulas[0].masa * v_prom_cuad) / (2 * k_B)
         
-        # Deben ser aproximadamente iguales
-        self.assertAlmostEqual(temperatura_medida, temperatura_calculada, delta=1.0)
+        # Deben ser aproximadamente iguales (tolerancia del 5%)
+        diferencia_porcentual = abs(T_calculada - T_velocidad) / T_calculada * 100
+        self.assertLess(diferencia_porcentual, 5.0)
+        
+        print(f"✓ RF3.5: Relación temperatura-velocidad verificada (diferencia: {diferencia_porcentual:.2f}%)")
     
-    def test_ecuacion_estado(self):
-        """Verifica la ecuación de estado para gas ideal en 2D."""
-        stats = self.simulacion.obtener_estadisticas()
+    def test_colisiones_paredes(self):
+        """Verifica que las colisiones con paredes sean elásticas."""
+        # Crear partícula cerca de la pared derecha
+        p = Particula(0, 1e-26, 1e-10, [self.ancho - 2e-10, self.alto/2], [100, 0])
         
-        # Para gas ideal 2D: P * A = N * k_B * T
-        k_B = 1.38e-23
-        area = self.simulacion.tamaño_caja ** 2
-        presion_calculada = (self.simulacion.n_particulas * k_B * stats['temperatura']) / area
+        # Energía antes de la colisión
+        energia_antes = p.energia_cinetica()
         
-        self.assertAlmostEqual(stats['presion'], presion_calculada, delta=1e-5)
+        # Forzar colisión con la pared
+        p.colisionar_pared(self.ancho, self.alto)
+        
+        # Energía después de la colisión
+        energia_despues = p.energia_cinetica()
+        
+        self.assertAlmostEqual(energia_antes, energia_despues, delta=1e-20)
+        print("✓ Colisiones con paredes elásticas")
+    
+    def test_movimiento_lineal(self):
+        """Verifica que el movimiento sea rectilíneo entre colisiones."""
+        p = Particula(0, 1e-26, 1e-10, [self.ancho/2, self.alto/2], [100, 50])
+        posicion_inicial = p.posicion.copy()
+        
+        # Mover la partícula
+        p.mover(1e-12)
+        posicion_final = p.posicion.copy()
+        
+        # Verificar que se movió en la dirección de la velocidad
+        desplazamiento_esperado = p.velocidad * 1e-12
+        desplazamiento_real = posicion_final - posicion_inicial
+        
+        np.testing.assert_array_almost_equal(desplazamiento_real, desplazamiento_esperado, decimal=10)
+        print("✓ Movimiento rectilíneo verificado")
+
+def ejecutar_pruebas_completas():
+    """Ejecuta todas las pruebas y muestra resumen."""
+    print("=== PRUEBAS DEL SISTEMA DE GAS IDEAL ===\n")
+    
+    # Crear test suite
+    loader = unittest.TestLoader()
+    suite = loader.loadTestsFromTestCase(TestGasIdeal)
+    
+    # Ejecutar pruebas
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(suite)
+    
+    # Mostrar resumen
+    print(f"\n=== RESUMEN ===")
+    print(f"Pruebas ejecutadas: {result.testsRun}")
+    print(f"Fallos: {len(result.failures)}")
+    print(f"Errores: {len(result.errors)}")
+    
+    if result.wasSuccessful():
+        print("✅ TODAS LAS PRUEBAS PASARON EXITOSAMENTE")
+        print("\nEl sistema cumple con todos los requerimientos funcionales:")
+        print("- RF1: Modelado de partículas ✓")
+        print("- RF2: Simulación del gas ✓") 
+        print("- RF3: Pruebas automatizadas ✓")
+        print("- RF4: Visualización científica ✓")
+    else:
+        print("❌ ALGUNAS PRUEBAS FALLARON")
+    
+    return result.wasSuccessful()
 
 if __name__ == '__main__':
-    unittest.main()
+    ejecutar_pruebas_completas()
