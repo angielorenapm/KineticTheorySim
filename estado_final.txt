@@ -1,0 +1,62 @@
+ESTADO FINAL DE LAS PARTÍCULAS
+==================================================
+Partícula 0:
+  Posición: (5.981476e-09, 1.936474e-09) m
+  Velocidad: (130.63, -138.69) m/s
+  Energía: 8.439509e-22 J
+  Temperatura equivalente: 61.16 K
+------------------------------
+Partícula 1:
+  Posición: (3.833465e-10, 2.049899e-09) m
+  Velocidad: (-9.28, 389.98) m/s
+  Energía: 3.537961e-21 J
+  Temperatura equivalente: 256.37 K
+------------------------------
+Partícula 2:
+  Posición: (7.185759e-09, 9.444262e-09) m
+  Velocidad: (418.77, 277.45) m/s
+  Energía: 5.867174e-21 J
+  Temperatura equivalente: 425.16 K
+------------------------------
+Partícula 3:
+  Posición: (5.762819e-09, 9.049146e-09) m
+  Velocidad: (106.40, 312.54) m/s
+  Energía: 2.534306e-21 J
+  Temperatura equivalente: 183.65 K
+------------------------------
+Partícula 4:
+  Posición: (9.853139e-09, 1.016417e-09) m
+  Velocidad: (237.88, -74.71) m/s
+  Energía: 1.445421e-21 J
+  Temperatura equivalente: 104.74 K
+------------------------------
+Partícula 5:
+  Posición: (5.892719e-09, 5.139182e-09) m
+  Velocidad: (-445.25, -528.98) m/s
+  Energía: 1.111513e-20 J
+  Temperatura equivalente: 805.44 K
+------------------------------
+Partícula 6:
+  Posición: (6.451269e-09, 3.395498e-09) m
+  Velocidad: (-574.79, 149.80) m/s
+  Energía: 8.203078e-21 J
+  Temperatura equivalente: 594.43 K
+------------------------------
+Partícula 7:
+  Posición: (2.576802e-09, 6.294511e-09) m
+  Velocidad: (-9.89, -35.65) m/s
+  Energía: 3.182932e-23 J
+  Temperatura equivalente: 2.31 K
+------------------------------
+Partícula 8:
+  Posición: (1.090527e-09, 1.500945e-09) m
+  Velocidad: (-225.88, 66.71) m/s
+  Energía: 1.289770e-21 J
+  Temperatura equivalente: 93.46 K
+------------------------------
+Partícula 9:
+  Posición: (4.965074e-09, 4.536575e-09) m
+  Velocidad: (304.07, -2.03) m/s
+  Energía: 2.149717e-21 J
+  Temperatura equivalente: 155.78 K
+------------------------------
