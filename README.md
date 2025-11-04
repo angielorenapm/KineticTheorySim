@@ -1,4 +1,4 @@
-```markdown
+
 # Kinetic Theory Sim - Simulación de Gas Ideal 2D
 
 ## 🏗️ Arquitectura del Sistema
